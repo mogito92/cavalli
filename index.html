@@ -315,14 +315,27 @@ if (e.code === 'Enter') {
     phase:1,
     diff:1.0,
     bossIndex:0,
+<<<<<<< HEAD
+    specialCd:0,
+    shakeT:0,
+    shakeMag:0,
+=======
+>>>>>>> origin/main
     last: performance.now()
   };
 
   const bossRoster = [
+<<<<<<< HEAD
+    { name: 'STALL.DRIVER', emoji: '🐴', color: '#ff4d7d', accent: 'rgba(255,77,125,.85)', bg: 'rgba(255,77,125,.08)', attack: { freq: 360, type: 'sawtooth' }, pattern: 'sweep' },
+    { name: 'NEIGH.SENTINEL', emoji: '🦄', color: '#8a5bff', accent: 'rgba(138,91,255,.85)', bg: 'rgba(138,91,255,.08)', attack: { freq: 520, type: 'triangle' }, pattern: 'spiral' },
+    { name: 'HAYWIRE.CROWN', emoji: '🐲', color: '#ffb347', accent: 'rgba(255,179,71,.85)', bg: 'rgba(255,179,71,.08)', attack: { freq: 280, type: 'square' }, pattern: 'double' },
+    { name: 'STABLE.APEX', emoji: '🦓', color: '#55d6ff', accent: 'rgba(85,214,255,.85)', bg: 'rgba(85,214,255,.08)', attack: { freq: 640, type: 'triangle' }, pattern: 'burst' }
+=======
     { name: 'STALL.DRIVER', emoji: '🐴', color: '#ff4d7d', accent: 'rgba(255,77,125,.85)' },
     { name: 'NEIGH.SENTINEL', emoji: '🦄', color: '#8a5bff', accent: 'rgba(138,91,255,.85)' },
     { name: 'HAYWIRE.CROWN', emoji: '🐲', color: '#ffb347', accent: 'rgba(255,179,71,.85)' },
     { name: 'STABLE.APEX', emoji: '🦓', color: '#55d6ff', accent: 'rgba(85,214,255,.85)' }
+>>>>>>> origin/main
   ];
 
   function currentBoss(){
@@ -357,6 +370,7 @@ if (e.code === 'Enter') {
   const bullets = [];   // {x,y,vx,vy,life}
   const drops = [];     // "poops" but styled as hazard blobs {x,y,vx,vy,r,life,spin,telegraphed}
   const particles = []; // {x,y,vx,vy,life,maxLife,size,col}
+  const dashTrails = []; // {x,y,life,maxLife}
 
   // ===== Build / Reset =====
   function resetAll(){
@@ -368,10 +382,21 @@ if (e.code === 'Enter') {
     state.diff=1.0;
     state.gameOver=false;
     state.bossIndex=0;
+<<<<<<< HEAD
+    state.specialCd=0;
+    state.shakeT=0;
+    state.shakeMag=0;
 
     bullets.length=0;
     drops.length=0;
     particles.length=0;
+    dashTrails.length=0;
+=======
+
+    bullets.length=0;
+    drops.length=0;
+    particles.length=0;
+>>>>>>> origin/main
 
     player.x = W()/2;
     player.y = H()*0.86;
@@ -379,6 +404,8 @@ if (e.code === 'Enter') {
     player.fireCd=0;
     player.dashCd=0;
     player.invuln=0;
+    player.dashTime=0;
+    player.dashDir=0;
 
     boss.x = W()/2;
     boss.y = H()*0.17;
@@ -444,6 +471,7 @@ if (e.code === 'Enter') {
   bullets.length = 0;
   drops.length = 0;
   particles.length = 0;
+  dashTrails.length = 0;
 
   state.combo = 1;
   state.comboTimer = 0;
@@ -465,6 +493,8 @@ if (e.code === 'Enter') {
   player.fireCd = 0;
   player.dashCd = 0;
   player.invuln = 0.35; // piccolo grace all’inizio round
+  player.dashTime = 0;
+  player.dashDir = 0;
 
   hideBanner();
   showToast("Boss: new instance spawned — continuing session.");
@@ -525,6 +555,18 @@ if (e.code === 'Enter') {
     ctx.restore();
   }
 
+  function drawBackground(){
+    const activeBoss = currentBoss();
+    ctx.save();
+    ctx.globalAlpha = 1;
+    const g = ctx.createRadialGradient(W()/2, H()/2, Math.min(W(),H())*0.1, W()/2, H()/2, Math.max(W(),H())*0.7);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(1, activeBoss.bg);
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W(),H());
+    ctx.restore();
+  }
+
   function drawVignette(){
     ctx.save();
     const g = ctx.createRadialGradient(W()/2,H()/2, Math.min(W(),H())*0.05, W()/2,H()/2, Math.max(W(),H())*0.62);
@@ -566,9 +608,30 @@ if (e.code === 'Enter') {
     ctx.arc(0, -3*DPR, 4.4*DPR, 0, Math.PI*2);
     ctx.fill();
 
+<<<<<<< HEAD
     ctx.restore();
   }
 
+  function drawDashTrails(){
+    if (!dashTrails.length) return;
+    ctx.save();
+    dashTrails.forEach(t => {
+      ctx.globalAlpha = clamp(t.life / t.maxLife, 0, 1) * 0.55;
+      ctx.shadowColor = 'rgba(85,214,255,.8)';
+      ctx.shadowBlur = 16*DPR;
+      ctx.fillStyle = 'rgba(85,214,255,.65)';
+      ctx.beginPath();
+      ctx.ellipse(t.x, t.y, 18*DPR, 10*DPR, 0, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+=======
+    ctx.restore();
+  }
+
+>>>>>>> origin/main
   function drawBoss(){
     const x=boss.x, y=boss.y;
     const activeBoss = currentBoss();
@@ -631,13 +694,14 @@ if (e.code === 'Enter') {
   }
 
   function drawDrops(){
+    const activeBoss = currentBoss();
     ctx.save();
     drops.forEach(d=>{
       // telegraph ring
       if (d.telegraphed > 0){
         ctx.globalAlpha = clamp(d.telegraphed/0.42, 0, 1)*0.35;
-        ctx.strokeStyle = 'rgba(255,77,125,.85)';
-        ctx.shadowColor = 'rgba(255,77,125,.85)';
+        ctx.strokeStyle = activeBoss.accent;
+        ctx.shadowColor = activeBoss.accent;
         ctx.shadowBlur = 16*DPR;
         ctx.lineWidth = 2*DPR;
         ctx.beginPath();
@@ -647,10 +711,10 @@ if (e.code === 'Enter') {
 
       // hazard blob (non “trash”, più “projectile”)
       ctx.globalAlpha = 0.95;
-      ctx.shadowColor = 'rgba(255,77,125,.65)';
+      ctx.shadowColor = activeBoss.accent.replace('.85', '.65');
       ctx.shadowBlur = 14*DPR;
       ctx.fillStyle = 'rgba(8,12,22,.92)';
-      ctx.strokeStyle = 'rgba(255,77,125,.75)';
+      ctx.strokeStyle = activeBoss.accent.replace('.85', '.75');
       ctx.lineWidth = 2*DPR;
       ctx.beginPath();
       ctx.arc(d.x, d.y, d.r, 0, Math.PI*2);
@@ -700,6 +764,7 @@ if (e.code === 'Enter') {
     // Patterns are telegraphed and scale with phase/difficulty.
     const phase = bossPhaseFromHP();
     state.phase = phase;
+    const activeBoss = currentBoss();
 
     boss.patternT += dt;
 
@@ -734,25 +799,29 @@ if (e.code === 'Enter') {
 
     // Telegraph line at spawn x (brief)
     if (Math.random() < chance){
-      if (mode % 4 === 0){
-        // "center pressure": around player x
-        const x = clamp(player.x + rand(-80,80)*DPR, 0, w);
-        dropAt(x, rand(260, 330)*DPR*state.diff, rand(10,13)*DPR);
-      } else if (mode % 4 === 1){
+      if (activeBoss.pattern === 'sweep'){
         // "sweep": boss sweeps, drops follow
         const x = boss.x + Math.sin(t*3.2) * (w*0.18);
         dropAt(x, rand(250, 315)*DPR*state.diff, rand(10,13)*DPR);
-      } else if (mode % 4 === 2){
+      } else if (activeBoss.pattern === 'spiral'){
+        // "spiral": rotating lanes
+        const x = w/2 + Math.sin(t*3.6) * (w*0.28);
+        dropAt(x, rand(230, 300)*DPR*state.diff, rand(9,12)*DPR);
+        if (phase>=2 && Math.random() < 0.5) dropAt(w - x, rand(230, 300)*DPR*state.diff, rand(9,12)*DPR);
+      } else if (activeBoss.pattern === 'double'){
         // "double": two lanes
-        const x1 = w*0.33 + Math.sin(t*2.4)*w*0.07;
-        const x2 = w*0.67 + Math.cos(t*2.2)*w*0.07;
-        dropAt(x1, rand(240, 300)*DPR*state.diff, rand(9,12)*DPR);
-        if (phase>=2) dropAt(x2, rand(240, 300)*DPR*state.diff, rand(9,12)*DPR);
+        const x1 = w*0.30 + Math.sin(t*2.8)*w*0.08;
+        const x2 = w*0.70 + Math.cos(t*2.6)*w*0.08;
+        dropAt(x1, rand(240, 310)*DPR*state.diff, rand(10,13)*DPR);
+        if (phase>=2) dropAt(x2, rand(240, 310)*DPR*state.diff, rand(10,13)*DPR);
       } else {
-        // phase 3 spice: staggered small cluster but not unfair
-        const base = clamp(player.x + rand(-120,120)*DPR, 0, w);
+        // "burst": cluster around player
+        const base = clamp(player.x + rand(-110,110)*DPR, 0, w);
         dropAt(base, rand(270, 340)*DPR*state.diff, rand(9,11)*DPR);
-        if (Math.random()<0.35) dropAt(base + rand(-44,44)*DPR, rand(260, 330)*DPR*state.diff, rand(8,10)*DPR);
+        if (Math.random()<0.4) dropAt(base + rand(-60,60)*DPR, rand(260, 330)*DPR*state.diff, rand(8,10)*DPR);
+      }
+      if (Math.random() < 0.35){
+        tone({freq: activeBoss.attack.freq, dur:0.05, type: activeBoss.attack.type, vol:0.18, slide: -40});
       }
     }
   }
@@ -764,6 +833,10 @@ if (e.code === 'Enter') {
     if (toastTimer > 0){
       toastTimer -= dt;
       if (toastTimer <= 0) toast.classList.remove('show');
+    }
+
+    if (state.shakeT > 0){
+      state.shakeT = Math.max(0, state.shakeT - dt);
     }
 
     // combo decay
@@ -785,6 +858,7 @@ state.diff = clamp(1.0 + state.sessionT*0.012 + (bossPhaseFromHP()-1)*0.22, 1.0,
     const left = keys.has('ArrowLeft') || keys.has('KeyA');
     const right = keys.has('ArrowRight') || keys.has('KeyD');
     const dash = keys.has('ShiftLeft') || keys.has('ShiftRight');
+    const special = keys.has('KeyC');
     const fire = keys.has('Space');
 
     const ax = (right?1:0) - (left?1:0);
@@ -796,14 +870,45 @@ state.diff = clamp(1.0 + state.sessionT*0.012 + (bossPhaseFromHP()-1)*0.22, 1.0,
     player.dashCd = Math.max(0, player.dashCd - dt);
     player.invuln = Math.max(0, player.invuln - dt);
 
-    if (dash && player.dashCd <= 0){
-      player.dashCd = 0.75;
-      const push = (ax===0 ? (Math.random()<0.5?-1:1) : ax) * 130*DPR;
-      player.x = clamp(player.x + push, 20*DPR, W()-20*DPR);
-      player.invuln = Math.max(player.invuln, 0.12);
-      spawnParticles(player.x, player.y, 14, 'rgba(85,214,255,.9)');
+    if (dash && player.dashCd <= 0 && player.dashTime <= 0){
+      player.dashCd = 0.9;
+      player.dashTime = 0.18;
+      player.dashDir = ax===0 ? (Math.random()<0.5?-1:1) : ax;
+      player.invuln = Math.max(player.invuln, 0.2);
       sfx.dash();
-      showToast("Input: DASH — i-frames granted.");
+      showToast("Input: DASH — scia attiva.");
+    }
+
+    if (player.dashTime > 0){
+      const dashSpeed = 920*DPR;
+      player.dashTime -= dt;
+      player.x = clamp(player.x + player.dashDir * dashSpeed * dt, 20*DPR, W()-20*DPR);
+      dashTrails.push({ x: player.x, y: player.y, life: 0.18, maxLife: 0.18 });
+      spawnParticles(player.x, player.y, 2, 'rgba(85,214,255,.75)');
+    }
+
+    if (state.specialCd > 0) state.specialCd = Math.max(0, state.specialCd - dt);
+    if (special && state.specialCd <= 0 && state.running){
+      state.specialCd = 10;
+      const shots = 30;
+      const speed = 700 * DPR;
+      for (let i=0;i<shots;i++){
+        const ang = (Math.PI*2) * (i / shots);
+        bullets.push({
+          x: player.x,
+          y: player.y - 6*DPR,
+          vx: Math.cos(ang) * speed,
+          vy: Math.sin(ang) * speed,
+          life: 1.2
+        });
+      }
+      drops.forEach(d => spawnParticles(d.x, d.y, 6, 'rgba(255,255,255,.6)'));
+      drops.length = 0;
+      state.shakeT = 0.4;
+      state.shakeMag = 8*DPR;
+      tone({freq: 120, dur:0.2, type:'sawtooth', vol:0.28, slide: 240});
+      noise({dur:0.16, vol:0.12});
+      showToast("Ability: NOVA — 360° burst online.");
     }
 
     if (fire && player.fireCd <= 0){
@@ -931,6 +1036,13 @@ bullets.push({
       if (p.life<=0) particles.splice(i,1);
     }
 
+    // Dash trails
+    for (let i=dashTrails.length-1;i>=0;i--){
+      const t = dashTrails[i];
+      t.life -= dt;
+      if (t.life <= 0) dashTrails.splice(i,1);
+    }
+
     // HUD sync (hp/phase/diff)
     state.phase = bossPhaseFromHP();
     elPhase.textContent = String(state.phase);
@@ -941,6 +1053,14 @@ bullets.push({
   // ===== Render =====
   function render(){
     ctx.clearRect(0,0,W(),H());
+    ctx.save();
+    if (state.shakeT > 0){
+      const mag = state.shakeMag * (state.shakeT / 0.4);
+      const ox = rand(-mag, mag);
+      const oy = rand(-mag, mag);
+      ctx.translate(ox, oy);
+    }
+    drawBackground();
     drawGrid();
 
     // subtle rings
@@ -960,8 +1080,10 @@ bullets.push({
     drawBullets();
     drawDrops();
     drawParticles();
+    drawDashTrails();
     drawPlayer();
     drawVignette();
+    ctx.restore();
 
     // invuln flicker overlay
     if (player.invuln>0){
@@ -989,7 +1111,7 @@ bullets.push({
   function init(){
     resetAll();
     setMute(false);
-    showBanner("HORSECORE", "Premi ENTER per iniziare", "Space spara • Shift dash • P pausa • M mute. Bilanciato: invulnerabilità dopo hit, pattern leggibili.");
+    showBanner("HORSECORE", "Premi ENTER per iniziare", "Space spara • Shift dash • C abilità speciale • P pausa • M mute. Bilanciato: invulnerabilità dopo hit, pattern leggibili.");
     loop();
   }
 
