@@ -315,17 +315,27 @@ if (e.code === 'Enter') {
     phase:1,
     diff:1.0,
     bossIndex:0,
+<<<<<<< HEAD
     specialCd:0,
     shakeT:0,
     shakeMag:0,
+=======
+>>>>>>> origin/main
     last: performance.now()
   };
 
   const bossRoster = [
+<<<<<<< HEAD
     { name: 'STALL.DRIVER', emoji: '🐴', color: '#ff4d7d', accent: 'rgba(255,77,125,.85)', bg: 'rgba(255,77,125,.08)', attack: { freq: 360, type: 'sawtooth' }, pattern: 'sweep' },
     { name: 'NEIGH.SENTINEL', emoji: '🦄', color: '#8a5bff', accent: 'rgba(138,91,255,.85)', bg: 'rgba(138,91,255,.08)', attack: { freq: 520, type: 'triangle' }, pattern: 'spiral' },
     { name: 'HAYWIRE.CROWN', emoji: '🐲', color: '#ffb347', accent: 'rgba(255,179,71,.85)', bg: 'rgba(255,179,71,.08)', attack: { freq: 280, type: 'square' }, pattern: 'double' },
     { name: 'STABLE.APEX', emoji: '🦓', color: '#55d6ff', accent: 'rgba(85,214,255,.85)', bg: 'rgba(85,214,255,.08)', attack: { freq: 640, type: 'triangle' }, pattern: 'burst' }
+=======
+    { name: 'STALL.DRIVER', emoji: '🐴', color: '#ff4d7d', accent: 'rgba(255,77,125,.85)' },
+    { name: 'NEIGH.SENTINEL', emoji: '🦄', color: '#8a5bff', accent: 'rgba(138,91,255,.85)' },
+    { name: 'HAYWIRE.CROWN', emoji: '🐲', color: '#ffb347', accent: 'rgba(255,179,71,.85)' },
+    { name: 'STABLE.APEX', emoji: '🦓', color: '#55d6ff', accent: 'rgba(85,214,255,.85)' }
+>>>>>>> origin/main
   ];
 
   function currentBoss(){
@@ -372,6 +382,7 @@ if (e.code === 'Enter') {
     state.diff=1.0;
     state.gameOver=false;
     state.bossIndex=0;
+<<<<<<< HEAD
     state.specialCd=0;
     state.shakeT=0;
     state.shakeMag=0;
@@ -380,6 +391,12 @@ if (e.code === 'Enter') {
     drops.length=0;
     particles.length=0;
     dashTrails.length=0;
+=======
+
+    bullets.length=0;
+    drops.length=0;
+    particles.length=0;
+>>>>>>> origin/main
 
     player.x = W()/2;
     player.y = H()*0.86;
@@ -591,6 +608,7 @@ if (e.code === 'Enter') {
     ctx.arc(0, -3*DPR, 4.4*DPR, 0, Math.PI*2);
     ctx.fill();
 
+<<<<<<< HEAD
     ctx.restore();
   }
 
@@ -609,6 +627,11 @@ if (e.code === 'Enter') {
     ctx.restore();
   }
 
+=======
+    ctx.restore();
+  }
+
+>>>>>>> origin/main
   function drawBoss(){
     const x=boss.x, y=boss.y;
     const activeBoss = currentBoss();
