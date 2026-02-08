@@ -564,6 +564,19 @@ if (e.code === 'Enter') {
     ctx.closePath();
   }
 
+  function ellipsePath(ctx, x, y, rx, ry, rot=0){
+    if (typeof ctx.ellipse === 'function'){
+      ctx.ellipse(x, y, rx, ry, rot, 0, Math.PI*2);
+      return;
+    }
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.scale(rx, ry);
+    ctx.arc(0, 0, 1, 0, Math.PI*2);
+    ctx.restore();
+  }
+
   function drawVignette(){
     ctx.save();
     const g = ctx.createRadialGradient(W()/2,H()/2, Math.min(W(),H())*0.05, W()/2,H()/2, Math.max(W(),H())*0.62);
@@ -617,7 +630,7 @@ if (e.code === 'Enter') {
       ctx.shadowBlur = 16*DPR;
       ctx.fillStyle = 'rgba(85,214,255,.65)';
       ctx.beginPath();
-      ctx.ellipse(t.x, t.y, 18*DPR, 10*DPR, 0, 0, Math.PI*2);
+      ellipsePath(ctx, t.x, t.y, 18*DPR, 10*DPR, 0);
       ctx.fill();
     });
     ctx.restore();
