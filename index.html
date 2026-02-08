@@ -200,10 +200,12 @@
     keys.add(e.code);
     if (e.code === 'KeyP') togglePause();
     if (e.code === 'KeyM') toggleMute();
-    if (e.code === 'Enter') {
-      if (!state.running) startGame();
-      else if (state.gameOver) restartGame();
-    }
+if (e.code === 'Enter') {
+  if (state.gameOver && state.victory) nextBoss();
+  else if (state.gameOver) restartGame();
+  else if (!state.running) startGame();
+}
+
   }, { passive:false });
   addEventListener('keyup', (e)=>keys.delete(e.code), { passive:true });
 
@@ -301,17 +303,19 @@
 
   // ===== Game state =====
   const state = {
-    running:false,
-    paused:false,
-    gameOver:false,
-    score:0,
-    lives:3,
-    combo:1,
-    comboTimer:0,
-    phase:1,
-    diff:1.0,
-    last: performance.now()
-  };
+  running:false,
+  paused:false,
+  gameOver:false,
+  victory:false,        // <— NEW: true solo se hai vinto
+  sessionT:0,           // <— NEW: tempo cumulativo (non si resetta tra boss)
+  score:0,
+  lives:3,
+  combo:1,
+  comboTimer:0,
+  phase:1,
+  diff:1.0,
+  last: performance.now()
+};
 
   // ===== Entities =====
   const player = {
@@ -415,13 +419,56 @@
     showToast("HORSECORE: session restarted — good luck.");
   }
 
+  function nextBoss(){
+  // NON tocchiamo: state.score, state.lives, state.sessionT
+  // Reset solo roba di round/boss
+  state.running = true;
+  state.paused = false;
+  state.gameOver = false;
+  state.victory = false;
+
+  bullets.length = 0;
+  drops.length = 0;
+  particles.length = 0;
+
+  state.combo = 1;
+  state.comboTimer = 0;
+  elCombo.textContent = 'x1';
+
+  // boss nuovo (più duro, ma senza azzerare la difficulty)
+  boss.hpMax = Math.round(boss.hpMax * 1.12); // scaling leggero
+  boss.hp = boss.hpMax;
+  boss.t = 0;
+  boss.patternT = 0;
+  boss.nextPattern = 2.2;
+  boss.telegraph = null;
+  boss.x = W()/2;
+  boss.y = H()*0.17;
+
+  // player “pulito”
+  player.x = W()/2;
+  player.y = H()*0.86;
+  player.fireCd = 0;
+  player.dashCd = 0;
+  player.invuln = 0.35; // piccolo grace all’inizio round
+
+  hideBanner();
+  showToast("Boss: new instance spawned — continuing session.");
+  syncHUD();
+}
+
+
   function endGame(win=false){
-    state.running=false;
-    state.gameOver=true;
-    const title = win ? "VICTORY" : "GAME OVER";
-    const main = win ? "Boss disinstallato." : "Boss ha vinto la build.";
-    showBanner(title, `${main}  (ENTER = restart)`, `Score: ${state.score} • Fase: ${state.phase} • Premi M per mute`);
-  }
+  state.running = false;
+  state.gameOver = true;
+  state.victory = !!win;
+
+  const title = win ? "VICTORY" : "GAME OVER";
+  const main  = win ? "Boss disinstallato." : "Boss ha vinto la build.";
+  const hint  = win ? "(ENTER = next boss)" : "(ENTER = restart)";
+  showBanner(title, `${main}  ${hint}`, `Score: ${state.score} • Fase: ${state.phase} • Premi M per mute`);
+}
+
 
   function togglePause(){
     if (!state.running) return;
@@ -714,8 +761,10 @@
     }
 
     // difficulty gently ramps with time + phase
-    boss.t += dt;
-    state.diff = clamp(1.0 + boss.t*0.012 + (bossPhaseFromHP()-1)*0.22, 1.0, 2.2);
+boss.t += dt;           // usalo pure per movimento/pattern del boss
+state.sessionT += dt;   // tempo cumulativo sessione (non si resetta tra boss)
+state.diff = clamp(1.0 + state.sessionT*0.012 + (bossPhaseFromHP()-1)*0.22, 1.0, 2.2);
+
 
     // Player movement
     const left = keys.has('ArrowLeft') || keys.has('KeyA');
@@ -743,16 +792,33 @@
     }
 
     if (fire && player.fireCd <= 0){
-      player.fireCd = 0.11; // readable but responsive
-      bullets.push({
-        x: player.x,
-        y: player.y - 18*DPR,
-        vx: 0,
-        vy: -980*DPR,
-        life: 1.35
-      });
-      sfx.shoot();
-    }
+  player.fireCd = 0.13; // leggermente più lento (bilancia lo spread)
+  sfx.shoot();
+
+  // ===== SPREAD SETTINGS =====
+  const pellets = 1;                 // 3 colpi
+  const spreadDeg = 15;              // ampiezza spread totale (gradi)
+  const speed = 980 * DPR;           // velocità proiettili
+  const baseX = player.x;
+  const baseY = player.y - 18*DPR;
+
+  // centro = -90° (verso l'alto). Distribuiamo i pellet attorno.
+  const baseAng = -Math.PI / 2;
+  const spreadRad = (spreadDeg * Math.PI) / 180;
+
+// 1 colpo: angolo random dentro un cono (imprecisione)
+const jitter = (Math.random() - 0.5) * spreadRad; // -spread/2 .. +spread/2
+const ang = baseAng + jitter;
+
+bullets.push({
+  x: baseX,
+  y: baseY,
+  vx: Math.cos(ang) * speed,
+  vy: Math.sin(ang) * speed,
+  life: 1.20
+});
+}
+
 
     // Boss movement (smooth, readable)
     const w = W();
