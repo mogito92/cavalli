@@ -303,19 +303,31 @@ if (e.code === 'Enter') {
 
   // ===== Game state =====
   const state = {
-  running:false,
-  paused:false,
-  gameOver:false,
-  victory:false,        // <— NEW: true solo se hai vinto
-  sessionT:0,           // <— NEW: tempo cumulativo (non si resetta tra boss)
-  score:0,
-  lives:3,
-  combo:1,
-  comboTimer:0,
-  phase:1,
-  diff:1.0,
-  last: performance.now()
-};
+    running:false,
+    paused:false,
+    gameOver:false,
+    victory:false,        // <— true solo se hai vinto
+    sessionT:0,           // <— tempo cumulativo (non si resetta tra boss)
+    score:0,
+    lives:3,
+    combo:1,
+    comboTimer:0,
+    phase:1,
+    diff:1.0,
+    bossIndex:0,
+    last: performance.now()
+  };
+
+  const bossRoster = [
+    { name: 'STALL.DRIVER', emoji: '🐴', color: '#ff4d7d', accent: 'rgba(255,77,125,.85)' },
+    { name: 'NEIGH.SENTINEL', emoji: '🦄', color: '#8a5bff', accent: 'rgba(138,91,255,.85)' },
+    { name: 'HAYWIRE.CROWN', emoji: '🐲', color: '#ffb347', accent: 'rgba(255,179,71,.85)' },
+    { name: 'STABLE.APEX', emoji: '🦓', color: '#55d6ff', accent: 'rgba(85,214,255,.85)' }
+  ];
+
+  function currentBoss(){
+    return bossRoster[state.bossIndex % bossRoster.length];
+  }
 
   // ===== Entities =====
   const player = {
@@ -355,6 +367,7 @@ if (e.code === 'Enter') {
     state.phase=1;
     state.diff=1.0;
     state.gameOver=false;
+    state.bossIndex=0;
 
     bullets.length=0;
     drops.length=0;
@@ -426,6 +439,7 @@ if (e.code === 'Enter') {
   state.paused = false;
   state.gameOver = false;
   state.victory = false;
+  state.bossIndex += 1;
 
   bullets.length = 0;
   drops.length = 0;
@@ -557,14 +571,15 @@ if (e.code === 'Enter') {
 
   function drawBoss(){
     const x=boss.x, y=boss.y;
+    const activeBoss = currentBoss();
 
     // aura
     ctx.save();
     const r = 110*DPR;
     const g = ctx.createRadialGradient(x,y, r*0.15, x,y, r*1.9);
-    g.addColorStop(0, 'rgba(255,77,125,.35)');
-    g.addColorStop(0.55, 'rgba(255,77,125,.10)');
-    g.addColorStop(1, 'rgba(255,77,125,0)');
+    g.addColorStop(0, `${activeBoss.accent.replace('.85', '.35')}`);
+    g.addColorStop(0.55, `${activeBoss.accent.replace('.85', '.10')}`);
+    g.addColorStop(1, `${activeBoss.accent.replace('.85', '0')}`);
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(x,y, r*1.9, 0, Math.PI*2); ctx.fill();
     ctx.restore();
@@ -574,16 +589,16 @@ if (e.code === 'Enter') {
     ctx.textAlign='center';
     ctx.textBaseline='middle';
     ctx.font = `${92*DPR}px system-ui, Apple Color Emoji, Segoe UI Emoji`;
-    ctx.shadowColor = 'rgba(255,77,125,.75)';
+    ctx.shadowColor = activeBoss.accent;
     ctx.shadowBlur = 18*DPR;
     ctx.globalAlpha = 1;
-    ctx.fillText('🐴', x, y+10*DPR);
+    ctx.fillText(activeBoss.emoji, x, y+10*DPR);
 
     // subtitle (meme, ma serio)
     ctx.shadowBlur = 0;
     ctx.font = `${12*DPR}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
     ctx.fillStyle='rgba(215,227,255,.75)';
-    ctx.fillText('BOSS: STALL.DRIVER', x, y-66*DPR);
+    ctx.fillText(`BOSS: ${activeBoss.name}`, x, y-66*DPR);
     ctx.restore();
 
     // hp bar (clean)
@@ -597,7 +612,7 @@ if (e.code === 'Enter') {
     ctx.roundRect(x-bw/2, y+76*DPR, bw, bh, 6*DPR);
     ctx.fill(); ctx.stroke();
 
-    ctx.fillStyle = 'rgba(255,77,125,.80)';
+    ctx.fillStyle = activeBoss.accent;
     ctx.beginPath();
     ctx.roundRect(x-bw/2, y+76*DPR, bw*p, bh, 6*DPR);
     ctx.fill();
